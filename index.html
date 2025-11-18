@@ -1006,18 +1006,12 @@
                     lat: startLocation[1]
                 };
 
-                // Movement state
                 this.velocity = { x: 0, y: 0 };
                 this.speed = 0.00004;
                 this.keys = {};
                 this.direction = 0;
                 this.isMoving = false;
                 this.avatarUrl = avatarUrl;
-                this.scene = null;
-                this.model = null;
-                this.mixer = null;
-                this.actions = {};
-                this.currentAction = null;
 
                 this.init();
             }
@@ -1026,13 +1020,15 @@
                 this.createCharacterElement();
                 this.setupKeyboardControls();
                 this.startAnimationLoop();
-                this.loadAvatar();
+
+                if (this.avatarUrl) {
+                    this.loadAvatar();
+                }
 
                 console.log('Avatar initialized at:', this.position);
             }
 
             createCharacterElement() {
-                // Create character container
                 const el = document.createElement('div');
                 el.style.width = '48px';
                 el.style.height = '64px';
@@ -1040,7 +1036,6 @@
                 el.style.transition = 'transform 0.1s ease';
                 el.style.perspective = '1000px';
 
-                // Placeholder for avatar
                 el.innerHTML = `
                     <div style="
                         width: 100%;
@@ -1058,7 +1053,6 @@
                     ">👤</div>
                 `;
 
-                // Create marker
                 this.marker = new maplibregl.Marker({
                     element: el,
                     anchor: 'center'
@@ -1096,52 +1090,40 @@
             }
 
             update() {
-                // Calculate target velocity based on key input
                 let targetVx = 0;
                 let targetVy = 0;
 
                 if (this.keys['w'] || this.keys['arrowup']) {
                     targetVy += this.speed;
-                    this.direction = 2;
+                    this.direction = 0;
                 }
                 if (this.keys['s'] || this.keys['arrowdown']) {
                     targetVy -= this.speed;
-                    this.direction = 0;
+                    this.direction = 180;
                 }
                 if (this.keys['a'] || this.keys['arrowleft']) {
                     targetVx -= this.speed;
-                    this.direction = 3;
+                    this.direction = 90;
                 }
                 if (this.keys['d'] || this.keys['arrowright']) {
                     targetVx += this.speed;
-                    this.direction = 1;
+                    this.direction = -90;
                 }
 
-                // Smooth acceleration towards target velocity
                 const acceleration = 0.2;
                 this.velocity.x += (targetVx - this.velocity.x) * acceleration;
                 this.velocity.y += (targetVy - this.velocity.y) * acceleration;
 
-                // Check if moving
                 this.isMoving = Math.abs(this.velocity.x) > 0.000001 || Math.abs(this.velocity.y) > 0.000001;
 
-                // If no movement, stop animation
-                if (!this.isMoving) {
-                    this.animationFrame = 0;
-                }
-
-                // Update position with smooth velocity
                 if (this.isMoving) {
                     this.position.lng += this.velocity.x;
                     this.position.lat += this.velocity.y;
 
-                    // Update marker position
                     this.marker.setLngLat([this.position.lng, this.position.lat]);
 
-                    // Animate character
                     this.animateCharacter();
 
-                    // Pan map to follow character smoothly
                     this.map.panTo([this.position.lng, this.position.lat], { duration: 200 });
                 }
             }
@@ -1149,22 +1131,17 @@
             animateCharacter() {
                 if (!this.isMoving) return;
 
-                // Subtle bobbing animation for walking effect
-                this.animationFrame += this.animationSpeed;
+                this.animationFrame = (this.animationFrame || 0) + 0.1;
                 const bounce = Math.abs(Math.sin(this.animationFrame)) * 2;
 
-                // Apply rotation based on direction
-                let rotation = this.direction * 90;
-
-                this.element.style.transform = `translateY(-${bounce}px) rotate(${rotation}deg)`;
+                this.element.style.transform = `translateY(-${bounce}px)`;
             }
 
             loadAvatar() {
-                // Fetch avatar GLB model
                 fetch(this.avatarUrl)
                     .then(response => response.arrayBuffer())
                     .then(buffer => {
-                        console.log('Avatar loaded successfully');
+                        console.log('Avatar loaded successfully from:', this.avatarUrl);
                     })
                     .catch(error => {
                         console.error('Error loading avatar:', error);
