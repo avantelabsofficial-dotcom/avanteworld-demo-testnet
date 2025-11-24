@@ -908,24 +908,27 @@
                 el.style.height = '64px';
                 el.style.cursor = 'pointer';
                 el.style.transition = 'transform 0.1s ease';
-                el.style.perspective = '1000px';
 
-                el.innerHTML = `
-                    <div style="
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(100, 150, 255, 0.3);
-                        border-radius: 8px;
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-                        position: relative;
-                        transform-origin: center bottom;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 24px;
-                        color: rgba(255, 255, 255, 0.6);
-                    ">👤</div>
-                `;
+                const canvas = document.createElement('canvas');
+                canvas.width = 48;
+                canvas.height = 64;
+                canvas.style.width = '48px';
+                canvas.style.height = '64px';
+                canvas.style.borderRadius = '8px';
+                canvas.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = 'rgba(100, 150, 255, 0.3)';
+                    ctx.fillRect(0, 0, 48, 64);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.font = 'bold 32px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('👤', 24, 32);
+                }
+
+                el.appendChild(canvas);
 
                 this.marker = new maplibregl.Marker({
                     element: el,
