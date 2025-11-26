@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { loadAvatarGLB, getAnimationClip, playAnimation, stopAnimation, createIdleCharacter } from './glb-loader';
+import { AVATAR_URLS, AvatarType } from './supabase';
 
 export interface AvatarConfig {
   scale?: number;
@@ -29,7 +30,7 @@ export class AvatarCharacter {
   constructor(scene: THREE.Scene, startLocation: [number, number], avatarUrl: string | null, config: AvatarConfig = {}) {
     this.scene = scene;
     this.position = { lng: startLocation[0], lat: startLocation[1] };
-    this.avatarUrl = avatarUrl;
+    this.avatarUrl = avatarUrl || this.getDefaultAvatarUrl();
 
     this.config = {
       scale: config.scale ?? 1,
@@ -42,6 +43,12 @@ export class AvatarCharacter {
 
     this.setupKeyboardControls();
     this.init();
+  }
+
+  private getDefaultAvatarUrl(): string {
+    const storedUrl = localStorage.getItem('sharedAvatarUrl');
+    if (storedUrl) return storedUrl;
+    return AVATAR_URLS.male;
   }
 
   private async init(): Promise<void> {
