@@ -711,13 +711,18 @@
                     this.mainMap.remove();
                 }
 
+                // Start from high altitude for cinematic zoom
+                const cinematicStartZoom = 18;
+                const cinematicStartPitch = 65;
+                const cinematicStartBearing = -30;
+
                 this.mainMap = new maplibregl.Map({
                     container: 'map',
                     style: this.config.style,
                     center: this.selectedLocation,
-                    zoom: this.config.focusZoom,
-                    pitch: this.config.focusPitch,
-                    bearing: 0,
+                    zoom: cinematicStartZoom,
+                    pitch: cinematicStartPitch,
+                    bearing: cinematicStartBearing,
                     antialias: true,
                     attributionControl: false
                 });
@@ -736,17 +741,64 @@
                         resolve();
                     });
                     this.mainMap.on('error', reject);
-                    
+
                     setTimeout(() => reject(new Error('Main map loading timeout')), 15000);
                 });
 
                 // Add 3D buildings layer
                 this.add3DBuildings();
 
-                // Add character
+                // Start cinematic zoom animation (GTA 5 style)
+                await this.playCinematicZoom();
+
+                // Add character after animation completes
                 this.addCharacter();
 
                 console.log('🏗️ Main 3D map loaded');
+            }
+
+            /**
+             * Play cinematic GTA 5-style zoom animation
+             * Zooms from altitude (zoom 18) down to street level (zoom 21.85)
+             */
+            async playCinematicZoom() {
+                return new Promise((resolve) => {
+                    console.log('🎬 Starting cinematic zoom animation...');
+
+                    // Update loading message
+                    const loading = document.getElementById('loading');
+                    if (loading && !loading.classList.contains('hidden')) {
+                        loading.querySelector('div:last-child').textContent = 'Descending to location...';
+                    }
+
+                    // GTA 5-style zoom parameters
+                    const targetZoom = 21.85;
+                    const targetPitch = 55;
+                    const targetBearing = 0;
+                    const duration = 4500; // 4.5 seconds for dramatic effect
+
+                    // Animate camera with easing
+                    this.mainMap.easeTo({
+                        center: this.selectedLocation,
+                        zoom: targetZoom,
+                        pitch: targetPitch,
+                        bearing: targetBearing,
+                        duration: duration,
+                        easing: (t) => {
+                            // Custom easing function for smooth deceleration
+                            // Similar to GTA 5's camera movement
+                            return t < 0.5
+                                ? 4 * t * t * t // Accelerate
+                                : 1 - Math.pow(-2 * t + 2, 3) / 2; // Decelerate smoothly
+                        }
+                    });
+
+                    // Resolve when animation completes
+                    setTimeout(() => {
+                        console.log('🎬 Cinematic zoom complete');
+                        resolve();
+                    }, duration + 100);
+                });
             }
 
             /**
